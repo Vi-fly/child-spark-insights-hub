@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { FileText, Wand2, Loader } from 'lucide-react';
-import { useToast } from '@/components/ui/toast';
+import { useToast } from '@/hooks/use-toast';
 import { generateReport, ReportGenerationInput, GeneratedReport } from '@/services/ai-integration';
 import ReportDetail from './ReportDetail';
 import { Report } from '@/types';
