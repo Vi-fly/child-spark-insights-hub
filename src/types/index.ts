@@ -14,8 +14,6 @@ export interface Child {
   name: string;
   dateOfBirth: string;
   class: string;
-  grade?: number;
-  phoneNumber?: string;
   parentIds: string[];
   observerId?: string;
   profileImage?: string;
