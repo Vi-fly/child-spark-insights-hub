@@ -70,9 +70,11 @@ export interface ReportSummary {
   curiosityResponseIndex: number;
 }
 
+export type GrowthAreaRating = 'excellent' | 'good' | 'fair' | 'needs-work';
+
 export interface GrowthArea {
   area: GrowthAreaType;
-  rating: 'excellent' | 'good' | 'fair' | 'needs-work';
+  rating: GrowthAreaRating;
   observation: string;
   emoji: string;
 }
@@ -117,13 +119,15 @@ export interface AIQuestion {
   createdAt: string;
 }
 
+export type GoalStatus = 'not-started' | 'in-progress' | 'completed';
+
 export interface Goal {
   id: string;
   childId: string;
   observerId: string;
   title: string;
   description: string;
-  status: 'not-started' | 'in-progress' | 'completed';
+  status: GoalStatus;
   dueDate?: string;
 }
 

@@ -5,35 +5,35 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Brain, Heart, Users, Palette, Activity, Compass, GraduationCap, Download, Printer, Star } from 'lucide-react';
-import { Report, GrowthArea } from '@/types';
+import { Report, GrowthArea, GrowthAreaType, GrowthAreaRating } from '@/types';
 
 interface ReportDetailProps {
   report: Report;
 }
 
 const ReportDetail: React.FC<ReportDetailProps> = ({ report }) => {
-  const getGrowthAreaIcon = (area: string) => {
+  const getGrowthAreaIcon = (area: GrowthAreaType) => {
     switch (area) {
-      case 'intellectual':
+      case 'Intellectual':
         return <Brain className="h-5 w-5" />;
-      case 'emotional':
+      case 'Emotional':
         return <Heart className="h-5 w-5" />;
-      case 'social':
+      case 'Social':
         return <Users className="h-5 w-5" />;
-      case 'creativity':
+      case 'Creativity':
         return <Palette className="h-5 w-5" />;
-      case 'physical':
+      case 'Physical':
         return <Activity className="h-5 w-5" />;
-      case 'values':
+      case 'Values':
         return <Compass className="h-5 w-5" />;
-      case 'independence':
+      case 'Independence':
         return <GraduationCap className="h-5 w-5" />;
       default:
         return <Brain className="h-5 w-5" />;
     }
   };
 
-  const getRatingSymbol = (rating: string) => {
+  const getRatingSymbol = (rating: GrowthAreaRating) => {
     switch (rating) {
       case 'excellent':
         return '✅';
@@ -48,7 +48,7 @@ const ReportDetail: React.FC<ReportDetailProps> = ({ report }) => {
     }
   };
 
-  const getRatingLabel = (rating: string) => {
+  const getRatingLabel = (rating: GrowthAreaRating) => {
     return rating.charAt(0).toUpperCase() + rating.slice(1).replace('-', ' ');
   };
 
@@ -90,15 +90,23 @@ const ReportDetail: React.FC<ReportDetailProps> = ({ report }) => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 border rounded-lg bg-muted/30">
-                <p className="text-sm text-muted-foreground">Theme of the Day</p>
+                <p className="text-sm text-muted-foreground">🧒 Child's Name</p>
+                <p className="font-medium">Arnav</p>
+              </div>
+              <div className="p-4 border rounded-lg bg-muted/30">
+                <p className="text-sm text-muted-foreground">📅 Date</p>
+                <p className="font-medium">{report.date}</p>
+              </div>
+              <div className="p-4 border rounded-lg bg-muted/30">
+                <p className="text-sm text-muted-foreground">🎯 Theme of the Day</p>
                 <p className="font-medium">{report.theme}</p>
               </div>
               <div className="p-4 border rounded-lg bg-muted/30">
-                <p className="text-sm text-muted-foreground">Curiosity Seed Explored</p>
+                <p className="text-sm text-muted-foreground">🌱 Curiosity Seed Explored</p>
                 <p className="font-medium">{report.curiositySeed}</p>
               </div>
               <div className="p-4 border rounded-lg bg-muted/30">
-                <p className="text-sm text-muted-foreground">Overall Growth Score</p>
+                <p className="text-sm text-muted-foreground">🧠 Overall Growth Score</p>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge className={getOverallScoreBadge(report.overallScore)}>
                     {report.overallScore}
@@ -118,8 +126,11 @@ const ReportDetail: React.FC<ReportDetailProps> = ({ report }) => {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Star className="h-5 w-5 text-observer-light" />
-                <h3 className="font-semibold">Curiosity Response Index: {report.curiosityResponseIndex} / 10</h3>
+                <h3 className="font-semibold">🌈 Curiosity Response Index: {report.curiosityResponseIndex} / 10</h3>
               </div>
+              <p className="text-sm text-muted-foreground">
+                Arnav showed moderate interest in today's curiosity seed ({report.curiositySeed}), asking follow-up questions and showing openness to underwater experiences. Potential area of future interest.
+              </p>
             </div>
           </div>
         </CardContent>
@@ -127,42 +138,46 @@ const ReportDetail: React.FC<ReportDetailProps> = ({ report }) => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Growth Metrics & Observations</CardTitle>
+          <CardTitle>📊 Growth Metrics & Observations</CardTitle>
           <CardDescription>Detailed assessment of each developmental area</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {report.growthAreas.map((area, index) => (
-              <div 
-                key={index} 
-                className={`report-card ${area.rating} p-4`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="emoji-circle">
-                    {getGrowthAreaIcon(area.area.toLowerCase())}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold flex items-center gap-2">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="py-3 px-4 text-left">Growth Area</th>
+                  <th className="py-3 px-4 text-left">Rating</th>
+                  <th className="py-3 px-4 text-left">Observation Summary</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.growthAreas.map((area, index) => (
+                  <tr key={index} className="border-b">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
                         <span>{area.emoji}</span>
                         <span>{area.area}</span>
-                      </h3>
-                      <Badge className={`report-card ${area.rating}`}>
-                        {getRatingSymbol(area.rating)} {getRatingLabel(area.rating)}
-                      </Badge>
-                    </div>
-                    <p className="mt-2">{area.observation}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center">
+                        <span>{getRatingSymbol(area.rating)}</span>
+                        <span className="ml-2">{getRatingLabel(area.rating)}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">{area.observation}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Parent Note</CardTitle>
+          <CardTitle>📣 Parent Note</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="p-4 border rounded-lg bg-muted/20">
@@ -176,7 +191,7 @@ const ReportDetail: React.FC<ReportDetailProps> = ({ report }) => {
           <CardTitle>Legend</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <div className="font-medium mb-2">Rating Scale</div>
               <ul className="space-y-2 text-sm">

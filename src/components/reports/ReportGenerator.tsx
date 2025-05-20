@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { FileText, Wand2, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { generateReport, ReportGenerationInput, GeneratedReport } from '@/services/ai-integration';
 import ReportDetail from './ReportDetail';
-import { Report } from '@/types';
+import { Report, GrowthAreaType, GrowthAreaRating } from '@/types';
 
 const ReportGenerator = () => {
   const [formData, setFormData] = useState<ReportGenerationInput>({
@@ -70,7 +69,12 @@ const ReportGenerator = () => {
     date: formData.date,
     theme: formData.theme,
     curiositySeed: formData.curiositySeed,
-    growthAreas: generatedReport.growthAreas,
+    growthAreas: generatedReport.growthAreas.map(area => ({
+      area: area.area as GrowthAreaType,
+      rating: area.rating as GrowthAreaRating,
+      observation: area.observation,
+      emoji: area.emoji
+    })),
     activatedAreas: generatedReport.activatedAreas,
     totalAreas: generatedReport.totalAreas,
     parentNote: generatedReport.parentNote,
