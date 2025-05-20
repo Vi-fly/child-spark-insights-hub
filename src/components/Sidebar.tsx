@@ -59,12 +59,6 @@ const Sidebar: React.FC = () => {
         path: '/media',
         roles: ['admin', 'observer'],
       },
-      {
-        title: 'Recordings',
-        icon: <Headphones className="w-5 h-5" />,
-        path: '/recordings',
-        roles: ['admin', 'observer'],
-      },
     ];
 
     const observerItems = [
