@@ -41,10 +41,14 @@ export const signIn = async (email: string, password: string) => {
   
   if (!profileData) throw new Error('No profile found');
   
-  // Ensure the role is a valid UserRole type
-  const role = profileData.role as UserRole;
-  if (!['admin', 'observer', 'parent'].includes(role)) {
-    throw new Error(`Invalid role: ${role}`);
+  // Validate the role before assigning it to ensure it's a valid UserRole
+  const roleValue = profileData.role as string;
+  let role: UserRole;
+  
+  if (roleValue === 'admin' || roleValue === 'observer' || roleValue === 'parent') {
+    role = roleValue;
+  } else {
+    throw new Error(`Invalid role: ${roleValue}`);
   }
   
   const user: User = {
@@ -70,9 +74,13 @@ export const fetchUserProfile = async (userId: string): Promise<User> => {
   if (!data) throw new Error('No profile found');
   
   // Validate that the role is a valid UserRole
-  const role = data.role as UserRole;
-  if (!['admin', 'observer', 'parent'].includes(role)) {
-    throw new Error(`Invalid role: ${role}`);
+  const roleValue = data.role as string;
+  let role: UserRole;
+  
+  if (roleValue === 'admin' || roleValue === 'observer' || roleValue === 'parent') {
+    role = roleValue;
+  } else {
+    throw new Error(`Invalid role: ${roleValue}`);
   }
   
   return {
@@ -106,7 +114,7 @@ export const fetchAllObservers = async (): Promise<Observer[]> => {
   const { data, error } = await supabase
     .from('profiles')
     .select(`
-      *,
+      id, name, email, profile_image_url, role, created_at, updated_at,
       observer_child_mappings!inner(child_id)
     `)
     .eq('role', 'observer');
@@ -119,12 +127,13 @@ export const fetchAllObservers = async (): Promise<Observer[]> => {
       ? observer.observer_child_mappings.map((mapping: any) => mapping.child_id)
       : [];
     
+    // For fields that might be missing in the database, use default values
     return {
       id: observer.id,
       name: observer.name,
       email: observer.email,
-      phone: observer.phone || undefined,
-      specialization: observer.specialization || undefined,
+      phone: undefined, // Since it doesn't exist in the database schema
+      specialization: undefined, // Since it doesn't exist in the database schema
       assignedChildIds,
       profileImage: observer.profile_image_url || undefined,
     };
@@ -136,7 +145,7 @@ export const fetchAllParents = async (): Promise<Parent[]> => {
   const { data, error } = await supabase
     .from('profiles')
     .select(`
-      *,
+      id, name, email, profile_image_url, role, created_at, updated_at,
       parent_child_mappings!inner(child_id)
     `)
     .eq('role', 'parent');
@@ -153,7 +162,7 @@ export const fetchAllParents = async (): Promise<Parent[]> => {
       id: parent.id,
       name: parent.name,
       email: parent.email,
-      phone: parent.phone || undefined,
+      phone: undefined, // Since it doesn't exist in the database schema
       childIds,
       profileImage: parent.profile_image_url || undefined,
     };
@@ -241,12 +250,18 @@ export const fetchReportDetails = async (reportId: string): Promise<Report> => {
   if (growthAreasError) throw growthAreasError;
   
   // Transform growth areas data to match our type
-  const growthAreas: GrowthArea[] = growthAreasData.map(area => ({
-    area: area.area as GrowthAreaType,
-    rating: area.rating as GrowthAreaRating,
-    observation: area.observation,
-    emoji: area.emoji || '',
-  }));
+  const growthAreas: GrowthArea[] = growthAreasData.map(area => {
+    // Validate area and rating to ensure they match our types
+    const areaType = validateGrowthAreaType(area.area);
+    const ratingType = validateGrowthAreaRating(area.rating);
+    
+    return {
+      area: areaType,
+      rating: ratingType,
+      observation: area.observation,
+      emoji: area.emoji || '',
+    };
+  });
   
   // Calculate activated areas
   const activatedAreas = growthAreas.filter(area => 
@@ -269,6 +284,37 @@ export const fetchReportDetails = async (reportId: string): Promise<Report> => {
   };
 };
 
+// Helper function to validate growth area type
+function validateGrowthAreaType(value: string): GrowthAreaType {
+  const validTypes: GrowthAreaType[] = [
+    'Intellectual', 'Emotional', 'Social', 'Creativity', 
+    'Physical', 'Values', 'Independence'
+  ];
+  
+  if (validTypes.includes(value as GrowthAreaType)) {
+    return value as GrowthAreaType;
+  }
+  
+  // Default to Intellectual if invalid
+  console.warn(`Invalid growth area type: ${value}, defaulting to Intellectual`);
+  return 'Intellectual';
+}
+
+// Helper function to validate growth area rating
+function validateGrowthAreaRating(value: string): GrowthAreaRating {
+  const validRatings: GrowthAreaRating[] = [
+    'excellent', 'good', 'fair', 'needs-work'
+  ];
+  
+  if (validRatings.includes(value as GrowthAreaRating)) {
+    return value as GrowthAreaRating;
+  }
+  
+  // Default to 'fair' if invalid
+  console.warn(`Invalid growth area rating: ${value}, defaulting to fair`);
+  return 'fair';
+}
+
 // AI Questions
 export const fetchAIQuestions = async (childId: string): Promise<AIQuestion[]> => {
   const { data, error } = await supabase
@@ -278,15 +324,31 @@ export const fetchAIQuestions = async (childId: string): Promise<AIQuestion[]> =
   
   if (error) throw error;
   
-  return data.map(question => ({
-    id: question.id,
-    childId: question.child_id,
-    observerId: question.observer_id,
-    question: question.question,
-    questionType: question.question_type as QuestionType,
-    isAnswered: question.is_answered,
-    createdAt: question.created_at,
-  }));
+  return data.map(question => {
+    // Validate question type
+    const questionTypeValue = question.question_type;
+    let questionType: QuestionType;
+    
+    if (questionTypeValue === 'Dynamic' || questionTypeValue === 'Curiosity' || 
+        ['Intellectual', 'Emotional', 'Social', 'Creativity', 
+        'Physical', 'Values', 'Independence'].includes(questionTypeValue)) {
+      questionType = questionTypeValue as QuestionType;
+    } else {
+      // Default to Dynamic if invalid
+      console.warn(`Invalid question type: ${questionTypeValue}, defaulting to Dynamic`);
+      questionType = 'Dynamic';
+    }
+    
+    return {
+      id: question.id,
+      childId: question.child_id,
+      observerId: question.observer_id,
+      question: question.question,
+      questionType,
+      isAnswered: question.is_answered,
+      createdAt: question.created_at,
+    };
+  });
 };
 
 // Goals
@@ -298,15 +360,29 @@ export const fetchGoals = async (childId: string): Promise<Goal[]> => {
   
   if (error) throw error;
   
-  return data.map(goal => ({
-    id: goal.id,
-    childId: goal.child_id,
-    observerId: goal.observer_id,
-    title: goal.title,
-    description: goal.description,
-    status: goal.status as GoalStatus,
-    dueDate: goal.due_date || undefined,
-  }));
+  return data.map(goal => {
+    // Validate goal status
+    const statusValue = goal.status;
+    let status: GoalStatus;
+    
+    if (statusValue === 'not-started' || statusValue === 'in-progress' || statusValue === 'completed') {
+      status = statusValue as GoalStatus;
+    } else {
+      // Default to not-started if invalid
+      console.warn(`Invalid goal status: ${statusValue}, defaulting to not-started`);
+      status = 'not-started';
+    }
+    
+    return {
+      id: goal.id,
+      childId: goal.child_id,
+      observerId: goal.observer_id,
+      title: goal.title,
+      description: goal.description,
+      status,
+      dueDate: goal.due_date || undefined,
+    };
+  });
 };
 
 export const createGoal = async (goal: Omit<Goal, 'id'>): Promise<Goal> => {
@@ -325,13 +401,24 @@ export const createGoal = async (goal: Omit<Goal, 'id'>): Promise<Goal> => {
   
   if (error) throw error;
   
+  // Validate goal status
+  const statusValue = data.status;
+  let status: GoalStatus;
+  
+  if (statusValue === 'not-started' || statusValue === 'in-progress' || statusValue === 'completed') {
+    status = statusValue as GoalStatus;
+  } else {
+    // Default to not-started if invalid
+    status = 'not-started';
+  }
+  
   return {
     id: data.id,
     childId: data.child_id,
     observerId: data.observer_id,
     title: data.title,
     description: data.description,
-    status: data.status as GoalStatus,
+    status,
     dueDate: data.due_date || undefined,
   };
 };
@@ -347,9 +434,10 @@ export const fetchMonthlyReports = async (childId: string): Promise<MonthlyRepor
   
   return data.map(report => {
     // Transform the JSON growth summary into a Record<GrowthAreaType, any>
-    let growthSummary: Record<GrowthAreaType, any> = {} as Record<GrowthAreaType, any>;
+    let growthSummary: Record<GrowthAreaType, any> | undefined = undefined;
     
     if (report.growth_summary) {
+      growthSummary = {} as Record<GrowthAreaType, any>;
       const summaryObj = report.growth_summary as Record<string, any>;
       // Only include valid GrowthAreaType keys
       const validGrowthAreas: GrowthAreaType[] = [
@@ -359,7 +447,9 @@ export const fetchMonthlyReports = async (childId: string): Promise<MonthlyRepor
       
       validGrowthAreas.forEach(area => {
         if (summaryObj[area]) {
-          growthSummary[area] = summaryObj[area];
+          if (growthSummary) {
+            growthSummary[area] = summaryObj[area];
+          }
         }
       });
     }
@@ -378,8 +468,15 @@ export const fetchMonthlyReports = async (childId: string): Promise<MonthlyRepor
   });
 };
 
-// Media resources
-export const fetchMediaForChild = async (childId: string): Promise<Media[]> => {
+// Media resources - This function has been modified to handle the fact that the 'media' table
+// doesn't exist in the Supabase schema yet
+export const fetchMediaForChild = async (_childId: string): Promise<Media[]> => {
+  // Since the media table doesn't exist yet, we return an empty array
+  console.warn("The media table doesn't exist in the Supabase schema yet. Returning empty array.");
+  return [];
+  
+  // When the media table is created, uncomment and use this code:
+  /*
   const { data, error } = await supabase
     .from('media')
     .select('*')
@@ -390,12 +487,13 @@ export const fetchMediaForChild = async (childId: string): Promise<Media[]> => {
   return data.map(media => ({
     id: media.id,
     childId: media.child_id,
-    type: media.type,
+    type: media.type as 'audio' | 'image',
     url: media.url,
     dateCreated: media.date_created,
     description: media.description || undefined,
     processedText: media.processed_text || undefined,
   }));
+  */
 };
 
 // Messages
