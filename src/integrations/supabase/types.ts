@@ -17,6 +17,7 @@ export type Database = {
           is_answered: boolean
           observer_id: string
           question: string
+          question_type: string
         }
         Insert: {
           child_id: string
@@ -25,6 +26,7 @@ export type Database = {
           is_answered?: boolean
           observer_id: string
           question: string
+          question_type: string
         }
         Update: {
           child_id?: string
@@ -33,6 +35,7 @@ export type Database = {
           is_answered?: boolean
           observer_id?: string
           question?: string
+          question_type?: string
         }
         Relationships: [
           {

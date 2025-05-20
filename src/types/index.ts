@@ -45,6 +45,20 @@ export interface Admin {
   profileImage?: string;
 }
 
+export type GrowthAreaType = 
+  | 'Intellectual'
+  | 'Emotional'
+  | 'Social'
+  | 'Creativity'
+  | 'Physical'
+  | 'Values'
+  | 'Independence';
+
+export type QuestionType =
+  | 'Dynamic'
+  | 'Curiosity'
+  | GrowthAreaType;
+
 export interface ReportSummary {
   id: string;
   childId: string;
@@ -57,7 +71,7 @@ export interface ReportSummary {
 }
 
 export interface GrowthArea {
-  area: string;
+  area: GrowthAreaType;
   rating: 'excellent' | 'good' | 'fair' | 'needs-work';
   observation: string;
   emoji: string;
@@ -91,4 +105,36 @@ export interface Message {
   read: boolean;
   reportId?: string;
   isPinned: boolean;
+}
+
+export interface AIQuestion {
+  id: string;
+  childId: string;
+  observerId: string;
+  question: string;
+  questionType: QuestionType;
+  isAnswered: boolean;
+  createdAt: string;
+}
+
+export interface Goal {
+  id: string;
+  childId: string;
+  observerId: string;
+  title: string;
+  description: string;
+  status: 'not-started' | 'in-progress' | 'completed';
+  dueDate?: string;
+}
+
+export interface MonthlyReport {
+  id: string;
+  childId: string;
+  observerId: string;
+  month: number;
+  year: number;
+  summary: string;
+  growthSummary?: Record<GrowthAreaType, any>;
+  adminReviewed: boolean;
+  sentToParent: boolean;
 }
