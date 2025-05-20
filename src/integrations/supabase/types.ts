@@ -173,6 +173,50 @@ export type Database = {
           },
         ]
       }
+      media: {
+        Row: {
+          child_id: string
+          created_at: string
+          date_created: string
+          description: string | null
+          id: string
+          processed_text: string | null
+          type: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          date_created?: string
+          description?: string | null
+          id?: string
+          processed_text?: string | null
+          type: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          date_created?: string
+          description?: string | null
+          id?: string
+          processed_text?: string | null
+          type?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string

@@ -24,28 +24,7 @@ const ReportsPage = () => {
       </div>
 
       {!isParent && (
-        <Tabs defaultValue="all" className="mb-6">
-          <TabsList>
-            <TabsTrigger value="all" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              All Reports
-            </TabsTrigger>
-            <TabsTrigger value="create" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Create New
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all">
-            <p className="text-center py-16 text-muted-foreground">
-              Report listing will be displayed here
-            </p>
-          </TabsContent>
-          
-          <TabsContent value="create">
-            <ReportGenerator />
-          </TabsContent>
-        </Tabs>
+        <ReportGenerator />
       )}
 
       {isParent && (
