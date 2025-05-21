@@ -386,7 +386,7 @@ const MediaCapture: React.FC<MediaCaptureProps> = ({ onMediaProcessed }) => {
               <div className="flex flex-col items-center space-y-4">
                 <div className="flex items-center justify-center w-full h-32 bg-muted rounded-lg">
                   <div className="text-center">
-                    {status === 'recording' ? (
+                    {status === "recording" ? (
                       <div className="flex flex-col items-center">
                         <div className="w-4 h-4 rounded-full bg-red-500 animate-pulse mb-2"></div>
                         <p className="text-sm font-medium">Recording in progress...</p>
@@ -402,17 +402,17 @@ const MediaCapture: React.FC<MediaCaptureProps> = ({ onMediaProcessed }) => {
                 </div>
 
                 <div className="flex space-x-2">
-                  {status !== 'recording' && !audioURL && (
+                  {status !== "recording" && !audioURL && (
                     <Button 
                       onClick={startRecording}
-                      disabled={!selectedStudentId || status === 'recording'}
+                      disabled={!selectedStudentId || status === "recording"}
                       variant="default"
                     >
                       <Headphones className="h-4 w-4 mr-2" /> Start Recording
                     </Button>
                   )}
                   
-                  {status === 'recording' && (
+                  {status === "recording" && (
                     <Button 
                       onClick={stopRecording}
                       variant="destructive"
