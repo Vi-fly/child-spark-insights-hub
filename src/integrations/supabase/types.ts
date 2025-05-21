@@ -54,13 +54,51 @@ export type Database = {
           },
         ]
       }
+      child_parent_mappings: {
+        Row: {
+          child_id: string | null
+          created_at: string | null
+          id: string
+          parent_id: string | null
+        }
+        Insert: {
+          child_id?: string | null
+          created_at?: string | null
+          id?: string
+          parent_id?: string | null
+        }
+        Update: {
+          child_id?: string | null
+          created_at?: string | null
+          id?: string
+          parent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_parent_mappings_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "child_parent_mappings_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "parent_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       children: {
         Row: {
           class: string
           created_at: string
           date_of_birth: string
+          grade: number | null
           id: string
           name: string
+          phone_number: string | null
           profile_image_url: string | null
           updated_at: string
         }
@@ -68,8 +106,10 @@ export type Database = {
           class: string
           created_at?: string
           date_of_birth: string
+          grade?: number | null
           id?: string
           name: string
+          phone_number?: string | null
           profile_image_url?: string | null
           updated_at?: string
         }
@@ -77,8 +117,10 @@ export type Database = {
           class?: string
           created_at?: string
           date_of_birth?: string
+          grade?: number | null
           id?: string
           name?: string
+          phone_number?: string | null
           profile_image_url?: string | null
           updated_at?: string
         }
@@ -365,6 +407,39 @@ export type Database = {
           },
         ]
       }
+      observer_profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          password_hint: string
+          phone_number: string | null
+          specialization: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          name: string
+          password_hint: string
+          phone_number?: string | null
+          specialization?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          password_hint?: string
+          phone_number?: string | null
+          specialization?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       parent_child_mappings: {
         Row: {
           child_id: string
@@ -400,6 +475,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      parent_profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          password_hint: string
+          phone_number: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          name: string
+          password_hint: string
+          phone_number: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          password_hint?: string
+          phone_number?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
