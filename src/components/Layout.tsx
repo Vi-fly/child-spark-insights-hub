@@ -3,7 +3,6 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import { Toaster } from '@/components/ui/toaster';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -30,7 +29,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="flex-1 overflow-auto">
         <main className="p-6 md:p-8">{children}</main>
       </div>
-      <Toaster />
     </div>
   );
 };
