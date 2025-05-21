@@ -1,46 +1,133 @@
 
-// This file implements integrations with OCR.space, AssemblyAI, and Google Gemini
-
 // API Keys
 const OCR_API_KEY = "K81647842288957";
 const ASSEMBLYAI_API_KEY = "28257cf1dcde4f1ba91145bd2864b3f5";
 const GOOGLE_API_KEY = "AIzaSyBawYvfJorhZXY9xQ81kxQVr1967Tj3oaE";
 
-// OCR Integration
+// OCR Integration using OCR.space API
 export const performOCR = async (imageFile: File): Promise<string> => {
-  // In a real implementation, this would send the image to OCR.space API using the OCR_API_KEY
   console.log('Performing OCR on file using OCR.space API:', imageFile.name);
-  console.log('Using OCR API Key:', OCR_API_KEY);
   
-  // Mock response - in a production environment, this would call the actual API
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(`Sample OCR text extracted from image ${imageFile.name}. 
-      The child has written: "I learned about ocean animals today. My favorite is the octopus because it has 8 legs and is very smart. I drew a picture of an octopus in the deep sea."`);
-    }, 1000);
-  });
+  const formData = new FormData();
+  formData.append('apikey', OCR_API_KEY);
+  formData.append('language', 'eng');
+  formData.append('isOverlayRequired', 'false');
+  formData.append('file', imageFile);
+  formData.append('OCREngine', '2'); // More accurate OCR engine
+  
+  try {
+    const response = await fetch('https://api.ocr.space/parse/image', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    const result = await response.json();
+    
+    if (!result.IsErroredOnProcessing) {
+      let extractedText = '';
+      if (result.ParsedResults && result.ParsedResults.length > 0) {
+        result.ParsedResults.forEach((parsedResult: any) => {
+          extractedText += parsedResult.ParsedText;
+        });
+      }
+      
+      if (!extractedText.trim()) {
+        extractedText = "No text was extracted from the image. The image may not contain text or the text might be unclear.";
+      }
+      
+      return extractedText;
+    } else {
+      throw new Error(result.ErrorMessage || 'OCR processing failed');
+    }
+  } catch (error) {
+    console.error('OCR API error:', error);
+    throw new Error('Failed to process the image. Please try again.');
+  }
 };
 
-// Audio Transcription
+// Audio Transcription using AssemblyAI
 export const transcribeAudio = async (audioFile: File): Promise<string> => {
-  // In a real implementation, this would send the audio to AssemblyAI using the ASSEMBLYAI_API_KEY
   console.log('Transcribing audio file using AssemblyAI:', audioFile.name);
-  console.log('Using AssemblyAI API Key:', ASSEMBLYAI_API_KEY);
-  
-  // Mock response - in a production environment, this would call the actual API
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(`Sample transcription from audio file ${audioFile.name}.
-      Child: "Today I went to the museum and saw dinosaur bones. I also read more of my book about money."
-      Observer: "That sounds interesting! What was your favorite part of the museum?"
-      Child: "I liked the T-Rex skeleton because it was so big. I want to make a comic about dinosaurs."
-      Observer: "That's a creative idea. How are you enjoying your book about finance?"
-      Child: "I like learning about saving money. I want to save up to buy my own toys."`);
-    }, 1500);
-  });
+
+  try {
+    // Step 1: Get upload URL from AssemblyAI
+    const uploadResponse = await fetch('https://api.assemblyai.com/v2/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': ASSEMBLYAI_API_KEY
+      }
+    });
+    
+    const uploadData = await uploadResponse.json();
+    const uploadUrl = uploadData.upload_url;
+
+    // Step 2: Upload the file to AssemblyAI
+    const fileArrayBuffer = await audioFile.arrayBuffer();
+    await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/octet-stream'
+      },
+      body: fileArrayBuffer
+    });
+
+    // Step 3: Start the transcription
+    const transcriptResponse = await fetch('https://api.assemblyai.com/v2/transcript', {
+      method: 'POST',
+      headers: {
+        'Authorization': ASSEMBLYAI_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        audio_url: uploadUrl,
+        speaker_labels: true
+      })
+    });
+    
+    const transcriptData = await transcriptResponse.json();
+    const transcriptId = transcriptData.id;
+
+    // Step 4: Poll for transcription completion
+    let status = 'processing';
+    let transcriptText = '';
+    
+    while (status !== 'completed' && status !== 'error') {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for a second
+      
+      const checkResponse = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': ASSEMBLYAI_API_KEY
+        }
+      });
+      
+      const checkData = await checkResponse.json();
+      status = checkData.status;
+      
+      if (status === 'completed') {
+        transcriptText = checkData.text || '';
+        
+        // Format with speaker labels if available
+        if (checkData.utterances && checkData.utterances.length > 0) {
+          transcriptText = checkData.utterances.map((utterance: any) => {
+            return `${utterance.speaker}: "${utterance.text}"`;
+          }).join('\n');
+        }
+      } else if (status === 'error') {
+        throw new Error(checkData.error || 'Transcription failed');
+      }
+    }
+    
+    return transcriptText || 'No speech detected in the audio file.';
+  } catch (error) {
+    console.error('AssemblyAI API error:', error);
+    throw new Error('Failed to transcribe the audio. Please try again.');
+  }
 };
 
-// AI Report Generation
+// AI Report Generation using Google Gemini API
+import { GrowthAreaRating, GrowthAreaType } from '@/types';
+
 export interface ReportGenerationInput {
   childName: string;
   childAge: string;
@@ -66,67 +153,89 @@ export interface GeneratedReport {
   overallScore: string;
 }
 
-import { GrowthAreaRating, GrowthAreaType } from '@/types';
-
 export const generateReport = async (input: ReportGenerationInput): Promise<GeneratedReport> => {
-  // In a real implementation, this would use Google Gemini API with the GOOGLE_API_KEY
   console.log('Generating report with Google Gemini using input:', input);
-  console.log('Using Google Gemini API Key:', GOOGLE_API_KEY);
-  
-  // Mock response - in a production environment, this would call the actual API
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        growthAreas: [
-          {
-            area: 'Intellectual',
-            rating: 'excellent',
-            observation: 'Connected museum visit to comic idea; continued reading a financial book.',
-            emoji: '🧠'
-          },
-          {
-            area: 'Emotional',
-            rating: 'good',
-            observation: 'Expressed joy from the visit; shared feelings with comfort and ease.',
-            emoji: '😊'
-          },
-          {
-            area: 'Social',
-            rating: 'fair',
-            observation: 'Intended to play a board game, no clear interaction update given.',
-            emoji: '🤝'
-          },
-          {
-            area: 'Creativity',
-            rating: 'good',
-            observation: 'Took creative inspiration from exhibits; mentioned comic idea development.',
-            emoji: '🎨'
-          },
-          {
-            area: 'Physical',
-            rating: 'needs-work',
-            observation: 'No physical activity recorded; sedentary day.',
-            emoji: '🏃'
-          },
-          {
-            area: 'Values',
-            rating: 'excellent',
-            observation: 'Expressed interest in financial literacy to become responsible and independent.',
-            emoji: '🧭'
-          },
-          {
-            area: 'Independence',
-            rating: 'good',
-            observation: 'Chose book independently; showed intent to self-learn.',
-            emoji: '🚀'
-          }
-        ],
-        curiosityResponseIndex: 7.5,
-        activatedAreas: 6,
-        totalAreas: 7,
-        parentNote: 'Arnav had a growth-rich day filled with curiosity, reflection, and self-motivated learning. With light encouragement in physical and social areas, he is on track for holistic development.',
-        overallScore: 'Balanced Growth – 6/7 Areas Active'
-      });
-    }, 2000);
-  });
+
+  try {
+    // Prepare the prompt for Gemini
+    const prompt = `
+    Generate a comprehensive child development report based on the following information:
+    
+    Child's Name: ${input.childName}
+    Child's Age: ${input.childAge}
+    Date: ${input.date}
+    Theme of the Day: ${input.theme}
+    ${input.curiositySeed ? `Curiosity Seed Explored: ${input.curiositySeed}` : ''}
+    
+    ${input.transcription ? `Audio Transcription: ${input.transcription}` : ''}
+    ${input.ocrText ? `OCR Text from Image: ${input.ocrText}` : ''}
+    ${input.observerNotes ? `Observer Notes: ${input.observerNotes}` : ''}
+    
+    Return the output as a JSON object with the following structure:
+    {
+      "growthAreas": [
+        {
+          "area": "Intellectual", // One of: Intellectual, Emotional, Social, Creativity, Physical, Values, Independence
+          "rating": "excellent", // One of: excellent, good, fair, needs-work
+          "observation": "Detailed observation here",
+          "emoji": "🧠" // Appropriate emoji for the area
+        },
+        // More growth areas...
+      ],
+      "curiosityResponseIndex": 7.5, // Scale of 1-10
+      "activatedAreas": 6, // Count of areas with good or excellent ratings
+      "totalAreas": 7, // Total number of areas assessed
+      "parentNote": "Summary note for parents",
+      "overallScore": "Balanced Growth – X/7 Areas Active" // Overall assessment
+    }
+    
+    Ensure all 7 growth areas (Intellectual, Emotional, Social, Creativity, Physical, Values, Independence) are included in the assessment.
+    `;
+
+    // Call Gemini API
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': GOOGLE_API_KEY
+      },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1024
+        }
+      })
+    });
+
+    const responseData = await response.json();
+    
+    if (responseData.error) {
+      throw new Error(responseData.error.message || 'Failed to generate report with AI');
+    }
+
+    // Extract the JSON response from the generated text
+    const generatedText = responseData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    // Find JSON within the response if it's wrapped in text
+    let jsonMatch = generatedText.match(/(\{[\s\S]*\})/);
+    let reportJson = jsonMatch ? jsonMatch[0] : generatedText;
+    
+    try {
+      const report = JSON.parse(reportJson) as GeneratedReport;
+      
+      // Ensure all required fields are present
+      if (!report.growthAreas || !Array.isArray(report.growthAreas)) {
+        throw new Error('Missing growth areas in the generated report');
+      }
+      
+      return report;
+    } catch (parseError) {
+      console.error('Error parsing AI response as JSON:', parseError);
+      throw new Error('Failed to parse AI-generated report. Please try again.');
+    }
+  } catch (error) {
+    console.error('Google Gemini API error:', error);
+    throw new Error('Failed to generate the report. Please try again.');
+  }
 };
