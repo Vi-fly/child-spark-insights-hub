@@ -401,10 +401,10 @@ const MediaCapture: React.FC<MediaCaptureProps> = ({ onMediaProcessed }) => {
                 </div>
 
                 <div className="flex space-x-2">
-                  {status !== "recording" && !audioURL && (
+                  {!audioURL && status !== "recording" && (
                     <Button 
                       onClick={startRecording}
-                      disabled={!selectedStudentId || status === "recording"}
+                      disabled={!selectedStudentId}
                       variant="default"
                     >
                       <Headphones className="h-4 w-4 mr-2" /> Start Recording
