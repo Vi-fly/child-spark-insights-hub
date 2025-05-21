@@ -108,6 +108,111 @@ export const transcribeAudio = async (audioFile: File): Promise<string> => {
   }
 };
 
+// Types for report generation
+export interface ReportGenerationInput {
+  childName: string;
+  childAge: string;
+  date: string;
+  theme: string;
+  curiositySeed?: string;
+  observerNotes?: string;
+  ocrText?: string;
+  transcription?: string;
+}
+
+export interface GrowthAreaData {
+  area: string;
+  rating: string;
+  observation: string;
+  emoji: string;
+}
+
+export interface GeneratedReport {
+  growthAreas: GrowthAreaData[];
+  activatedAreas: number;
+  totalAreas: number;
+  parentNote: string;
+  overallScore: string;
+  curiosityResponseIndex: number;
+}
+
+// Generate report with Google Gemini
+export const generateReport = async (input: ReportGenerationInput): Promise<GeneratedReport> => {
+  try {
+    // Combine all input text for Gemini
+    const allText = [
+      `Child: ${input.childName}, Age: ${input.childAge}`,
+      `Date: ${input.date}`,
+      `Theme: ${input.theme}`,
+      input.curiositySeed ? `Curiosity Seed: ${input.curiositySeed}` : '',
+      input.observerNotes ? `Observer Notes: ${input.observerNotes}` : '',
+      input.ocrText ? `OCR Text: ${input.ocrText}` : '',
+      input.transcription ? `Transcription: ${input.transcription}` : '',
+    ].filter(Boolean).join('\n\n');
+
+    const reportText = await generateReportWithGemini(allText);
+    
+    // For now, generate a structured report as a placeholder
+    // In production, this would parse the Gemini output in a more robust way
+    const mockReport: GeneratedReport = {
+      growthAreas: [
+        {
+          area: 'Intellectual',
+          rating: 'excellent',
+          observation: `${input.childName} demonstrated strong engagement with the theme of ${input.theme}.`,
+          emoji: '🧠'
+        },
+        {
+          area: 'Emotional',
+          rating: 'good',
+          observation: `${input.childName} showed appropriate emotional responses during activities.`,
+          emoji: '❤️'
+        },
+        {
+          area: 'Social',
+          rating: 'good',
+          observation: `${input.childName} interacted well with peers and teachers.`,
+          emoji: '👥'
+        },
+        {
+          area: 'Creativity',
+          rating: 'excellent',
+          observation: `${input.childName} approached tasks with unusual and innovative ideas.`,
+          emoji: '🎨'
+        },
+        {
+          area: 'Physical',
+          rating: 'fair',
+          observation: `${input.childName} participated in physical activities with moderate enthusiasm.`,
+          emoji: '🏃'
+        },
+        {
+          area: 'Values',
+          rating: 'good',
+          observation: `${input.childName} demonstrated good understanding of fairness and sharing.`,
+          emoji: '⭐'
+        },
+        {
+          area: 'Independence',
+          rating: 'good',
+          observation: `${input.childName} completed most tasks without requiring assistance.`,
+          emoji: '🚀'
+        }
+      ],
+      activatedAreas: 5,
+      totalAreas: 7,
+      parentNote: `${input.childName} had a productive session exploring ${input.theme}. Consider discussing this topic further at home to reinforce learning.`,
+      overallScore: "71%",
+      curiosityResponseIndex: input.curiositySeed ? 85 : 65,
+    };
+
+    return mockReport;
+  } catch (error) {
+    console.error('Report generation error:', error);
+    throw new Error('Failed to generate report');
+  }
+};
+
 // Generate report with Google Gemini (for future implementation)
 export const generateReportWithGemini = async (text: string): Promise<string> => {
   try {
